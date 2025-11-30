@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(tree:*)",
+      "Bash(pip install:*)",
+      "Bash(wc:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(python -m streamlit:*)",
+      "Bash(streamlit run:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

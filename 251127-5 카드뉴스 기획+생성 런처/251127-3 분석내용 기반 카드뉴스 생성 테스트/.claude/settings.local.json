@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(pip install:*)",
+      "Bash(.venvScriptspython test_designer_rag_random.py)",
+      "Bash(\"c:\\Users\\a\\Desktop\\작업파일(디자인, AI 등)\\251127-3 분석내용 기반 카드뉴스 생성 테스트\\.venv\\Scripts\\python.exe\" test_designer_rag_random.py)",
+      "Bash(\".venv\\Scripts\\pip.exe\" install google-generativeai numpy pillow)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

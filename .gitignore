@@ -1,0 +1,56 @@
+# 보안: API Key 및 민감한 정보
+.streamlit/secrets.toml
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+.AppleDouble
+.LSOverride
+
+# 로컬 개발
+local_test_files/
+temp/
+*.log
+
+# 캐시
+.cache/
+.pytest_cache/
+.streamlit/
+outputs/
+nul
