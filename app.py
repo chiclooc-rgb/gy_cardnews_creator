@@ -20,6 +20,7 @@ from PIL import Image
 from pypdf import PdfReader
 import tempfile
 import os
+import requests
 
 # ==========================================
 # ⚙️ 페이지 설정
@@ -543,10 +544,23 @@ def generate_single_page_design(page_idx, pages, tone, ratio, cover_color_palett
                     try:
                         if isinstance(r, dict) and 'file_path' in r:
                             file_path = r['file_path']
-                            if Path(file_path).exists():
+                            
+                            # URL인 경우 (Supabase)
+                            if str(file_path).startswith("http"):
+                                try:
+                                    response = requests.get(file_path, timeout=10)
+                                    response.raise_for_status()
+                                    img = Image.open(io.BytesIO(response.content))
+                                    ref_images.append(img)
+                                    add_log(f"✅ [{idx+1}] 로드 완료 (URL): {Path(file_path).name} ({img.size})", indent=2)
+                                except Exception as e:
+                                    add_log(f"❌ [{idx+1}] URL 로드 실패: {e}", indent=2)
+                            
+                            # 로컬 파일인 경우
+                            elif Path(file_path).exists():
                                 img = Image.open(file_path)
                                 ref_images.append(img)
-                                add_log(f"✅ [{idx+1}] 로드 완료: {Path(file_path).name} ({img.size})", indent=2)
+                                add_log(f"✅ [{idx+1}] 로드 완료 (로컬): {Path(file_path).name} ({img.size})", indent=2)
                             else:
                                 add_log(f"❌ [{idx+1}] 파일 없음: {file_path}", indent=2)
                         else:

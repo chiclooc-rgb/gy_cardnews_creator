@@ -54,3 +54,4 @@ temp/
 .streamlit/
 outputs/
 nul
+**/sorted_output/
