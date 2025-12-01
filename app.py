@@ -28,7 +28,7 @@ import requests
 st.set_page_config(
         page_title="광양시 카드뉴스 생성기",
         page_icon="📰",
-        layout="wide",
+        layout="centered",
         initial_sidebar_state="expanded"
 )
 
