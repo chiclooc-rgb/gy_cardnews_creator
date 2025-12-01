@@ -10,8 +10,15 @@ import pickle
 import numpy as np
 
 # Configuration
-# Try to get API Key from environment variable first, then fallback to hardcoded (security best practice)
-API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyDXpLVPAb3rnWRoHE56B8OuGi_fxLHfzUE") 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Configuration
+# Try to get API Key from environment variable first
+API_KEY = os.getenv("GOOGLE_API_KEY")
+if not API_KEY:
+    print("⚠️ GOOGLE_API_KEY not found in environment variables.") 
 MODEL_NAME = "gemini-2.0-flash" # Updated to 2.0-flash as per app.py, or keep 1.5-flash if preferred. Using 2.0-flash for consistency.
 EMBEDDING_MODEL = "models/text-embedding-004"
 OUTPUT_JSONL = "gwangyang_cardnews_db.jsonl"

@@ -6,8 +6,18 @@ from tqdm import tqdm
 import mimetypes
 
 # Configuration
-SUPABASE_URL = "https://liqozdnssagjotfbdibo.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcW96ZG5zc2Fnam90ZmJkaWJvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDUxMzA2NSwiZXhwIjoyMDgwMDg5MDY1fQ.HCQgqSlShncV8OlPKwGpzn-DNPZxFmA5Llja50xCll4"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://liqozdnssagjotfbdibo.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_KEY:
+    print("⚠️ SUPABASE_KEY not found in environment variables.")
+    # Fallback for user input if needed, or just error out
+    
 BUCKET_NAME = "cardnews"
 
 # Initialize Supabase Client
