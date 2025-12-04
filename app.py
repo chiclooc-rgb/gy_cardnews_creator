@@ -780,10 +780,7 @@ with st.sidebar:
 # 📰 메인 헤더
 # ==========================================
 st.markdown("""
-<div class="main-header">
-        <h1>📰 광양시 AI 카드뉴스 생성기</h1>
-        <p>기획부터 디자인까지 원클릭 자동화</p>
-</div>
+<h1 style='text-align: center; color: #1e3a8a; margin-bottom: 2rem;'>📰 광양시 AI 카드뉴스 생성기</h1>
 """, unsafe_allow_html=True)
 
 # 확대된 이미지 표시 (사이드바에서 🔍 버튼 클릭 시)
