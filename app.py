@@ -639,40 +639,28 @@ def generate_single_page_design(page_idx, pages, tone, ratio, cover_color_palett
                 else:
                     add_log(f"⚠️ 매돌이 이미지 URL 생성 실패", indent=2)
 
-            # [NEW] 광양시 심볼마크 통합
-            # 레퍼런스 이미지의 메타데이터에서 '광양시' 관련 키워드 확인
-            has_gwangyang_symbol = False
-            if refs:
-                for ref in refs:
-                    if isinstance(ref, dict):
-                        # 메타데이터에서 광양시 관련 키워드 검색
-                        ref_str = json.dumps(ref, ensure_ascii=False)
-                        if "광양시" in ref_str or "광양" in ref_str:
-                            has_gwangyang_symbol = True
-                            add_log(f"✅ 레퍼런스에서 광양시 관련 콘텐츠 감지", indent=2)
-                            break
-            
-            if has_gwangyang_symbol:
-                symbol_url = get_signed_url("assets/gwangyang_symbol.png")
-                if symbol_url:
-                    # 심볼마크 이미지를 실제로 다운로드하여 프롬프트에 포함
-                    try:
-                        response = requests.get(symbol_url, timeout=10)
-                        response.raise_for_status()
-                        symbol_img = Image.open(io.BytesIO(response.content))
-                        
-                        prompt_parts.append("**[광양시 심볼마크 사용 규칙 (매우 중요 - 반드시 준수)]**")
-                        prompt_parts.append("규칙 1: 다음 이미지는 '광양시 공식 심볼마크(로고)'입니다.")
-                        prompt_parts.append("규칙 2: 레퍼런스 이미지에 심볼마크가 있다면, 아래 제공된 심볼마크 이미지를 정확히 그대로 사용하여 동일한 위치에 배치하세요.")
-                        prompt_parts.append("규칙 3: 심볼마크를 절대 변형, 재생성, 또는 비슷하게 그리지 마세요. 제공된 이미지를 그대로 복사하여 사용해야 합니다.")
-                        prompt_parts.append("금지 사항: 심볼마크를 생략하거나 다른 로고로 대체하거나 새로 그리지 마세요.")
-                        prompt_parts.append(symbol_img)  # 실제 이미지 객체 추가
-                        
-                        add_log(f"✅ 광양시 심볼마크 이미지 다운로드 및 포함 완료", indent=2)
-                    except Exception as e:
-                        add_log(f"⚠️ 심볼마크 이미지 다운로드 실패: {e}", indent=2)
-                else:
-                    add_log(f"⚠️ 심볼마크 이미지 URL 생성 실패", indent=2)
+            # [NEW] 광양시 심볼마크 통합 (매돌이와 동일한 방식)
+            # 항상 심볼마크를 포함하고, 레퍼런스에 있을 경우에만 사용하도록 지시
+            symbol_url = get_signed_url("assets/gwangyang_symbol.png")
+            if symbol_url:
+                try:
+                    response = requests.get(symbol_url, timeout=10)
+                    response.raise_for_status()
+                    symbol_img = Image.open(io.BytesIO(response.content))
+                    
+                    prompt_parts.append("**[광양시 심볼마크 사용 규칙 (매우 중요)]**")
+                    prompt_parts.append("규칙 1: 다음 이미지는 '광양시 공식 심볼마크(로고)'입니다.")
+                    prompt_parts.append("규칙 2: 레퍼런스 이미지에 심볼마크(로고)가 포함되어 있다면, 아래 제공된 심볼마크 이미지를 정확히 그대로 사용하여 동일한 위치에 배치하세요.")
+                    prompt_parts.append("규칙 3: 심볼마크를 절대 변형, 재생성, 또는 비슷하게 그리지 마세요. 제공된 이미지를 그대로 복사하여 사용해야 합니다.")
+                    prompt_parts.append("규칙 4: 레퍼런스에 심볼마크가 없다면 추가하지 마세요.")
+                    prompt_parts.append("금지 사항: 심볼마크를 다른 로고로 대체하거나 새로 그리지 마세요.")
+                    prompt_parts.append(symbol_img)  # 실제 이미지 객체 추가
+                    
+                    add_log(f"✅ 광양시 심볼마크 이미지 포함 완료", indent=2)
+                except Exception as e:
+                    add_log(f"⚠️ 심볼마크 이미지 다운로드 실패: {e}", indent=2)
+            else:
+                add_log(f"⚠️ 심볼마크 이미지 URL 생성 실패", indent=2)
 
             # 참조 이미지 추가
             prompt_parts.extend(ref_images)
