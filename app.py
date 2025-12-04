@@ -21,6 +21,7 @@ from pypdf import PdfReader
 import tempfile
 import os
 import requests
+from supabase import create_client, Client
 
 # ==========================================
 # ⚙️ 페이지 설정
@@ -73,6 +74,10 @@ if "generation_result" not in st.session_state:
         st.session_state.generation_result = None
 if "current_zoom_image" not in st.session_state:
         st.session_state.current_zoom_image = None
+if "design_concepts" not in st.session_state:
+        st.session_state.design_concepts = []
+if "selected_design_concept" not in st.session_state:
+        st.session_state.selected_design_concept = None
 
 # 👇 [추가] 저장 경로 설정 (없으면 생성)
 if "output_dir" not in st.session_state:
@@ -282,6 +287,26 @@ def search_rag_references(index, query_text, page_type=None, top_k=3, color_filt
         except Exception as e:
             add_log(f"❌ 검색 오류: {e}")
             return []
+
+def get_signed_url(path, expiration=3600):
+    """Supabase Storage에서 서명된 URL 생성 (1시간 유효)"""
+    try:
+        # secrets.toml에서 정보 로드
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
+        bucket = st.secrets["supabase"]["bucket"]
+        
+        supabase: Client = create_client(url, key)
+        res = supabase.storage.from_(bucket).create_signed_url(path, expiration)
+        
+        if isinstance(res, dict) and 'signedURL' in res:
+            return res['signedURL']
+        elif hasattr(res, 'signedURL'):
+            return res.signedURL
+        return str(res)
+    except Exception as e:
+        add_log(f"❌ 서명된 URL 생성 실패 ({path}): {e}")
+        return None
 
 def render_plan_text(data):
         """기획안을 순수 한글 문안으로 변환"""
@@ -589,6 +614,40 @@ def generate_single_page_design(page_idx, pages, tone, ratio, cover_color_palett
                 f"4. 다음 내용을 포함하세요: {json.dumps(page['data'], ensure_ascii=False)}",
             ])
 
+            # [NEW] 디자인 컨셉 반영
+            if st.session_state.selected_design_concept:
+                concept = st.session_state.selected_design_concept
+                prompt_parts.append(f"**[디자인 컨셉]** 스타일: {concept['name']}, 설명: {concept['description']}")
+                add_log(f"🎨 디자인 컨셉 적용: {concept['name']}", indent=2)
+
+            # [NEW] 매돌이 캐릭터 통합
+            # 1. 기획안 내용이나 요약에 '매돌이'가 포함되어 있는지 확인
+            has_maedori = False
+            page_data_str = json.dumps(page['data'], ensure_ascii=False)
+            if "매돌이" in page_data_str:
+                has_maedori = True
+            
+            if has_maedori:
+                maedori_url = get_signed_url("assets/maedori_character.png")
+                if maedori_url:
+                    prompt_parts.append("**[매돌이 공식 캐릭터 사용 규칙 (매우 중요 - 반드시 준수)]**")
+                    prompt_parts.append("규칙 1: 제공된 매돌이 이미지는 '광양시의 공식 마스코트'입니다.")
+                    prompt_parts.append(f"규칙 2: 이 페이지 내용에 '매돌이'가 언급되어 있으므로, 반드시 다음 URL의 이미지를 참조하여 매돌이 캐릭터를 그리세요: {maedori_url}")
+                    prompt_parts.append("규칙 3: 매돌이 캐릭터의 외형(색상, 생김새, 표정 등)을 변형하지 말고 원본 그대로 유지하세요.")
+                    prompt_parts.append("금지 사항: 절대로 새로운 캐릭터를 창조하거나 다른 캐릭터로 대체하지 마세요.")
+                    add_log(f"✅ 매돌이 캐릭터 감지됨 - 공식 이미지 URL 포함", indent=2)
+                else:
+                    add_log(f"⚠️ 매돌이 이미지 URL 생성 실패", indent=2)
+
+            # [NEW] 광양시 심볼마크 통합
+            symbol_url = get_signed_url("assets/gwangyang_symbol.png")
+            if symbol_url:
+                prompt_parts.append("**[광양시 심볼마크 사용 규칙]**")
+                prompt_parts.append(f"참조 이미지(레퍼런스)에 '광양시 심볼마크(로고)'가 포함되어 있다면, 반드시 다음 URL의 공식 심볼마크 이미지를 사용하여 동일한 위치에 배치하세요: {symbol_url}")
+                prompt_parts.append("심볼마크는 변형하지 말고 원본 비율과 색상을 유지하세요.")
+            else:
+                add_log(f"⚠️ 심볼마크 이미지 URL 생성 실패", indent=2)
+
             # 참조 이미지 추가
             prompt_parts.extend(ref_images)
             add_log(f"📋 프롬프트 구성 완료 (텍스트 {len(prompt_parts)-len(ref_images)}개 + 이미지 {len(ref_images)}개)", indent=1)
@@ -867,7 +926,12 @@ if uploaded_file is not None:
         "body": [ { "page": 1, "summary": ["..."] } ],
         "outro": { "contact": "..." }
 },
-"estimated_tone": "..."
+"estimated_tone": "...",
+"design_concepts": [
+    {"name": "Concept 1 Name", "description": "Description of concept 1"},
+    {"name": "Concept 2 Name", "description": "Description of concept 2"},
+    {"name": "Concept 3 Name", "description": "Description of concept 3"}
+]
 }"""
                             ]
 
@@ -894,6 +958,12 @@ if uploaded_file is not None:
 
                                 plan_data = json.loads(response_text)
                                 st.session_state.plan_data = plan_data
+                                
+                                # 디자인 컨셉 저장
+                                if "design_concepts" in plan_data:
+                                    st.session_state.design_concepts = plan_data["design_concepts"]
+                                else:
+                                    st.session_state.design_concepts = []
 
                                 add_log("\n" + "=" * 60)
                                 add_log("🎉 [성공] 기획안이 완성되었습니다!")
@@ -944,6 +1014,23 @@ if st.session_state.plan_data is not None:
         with col_tone:
             tone = st.session_state.plan_data.get('estimated_tone', '미지정')
             st.info(f"📌 **예상 톤**: {tone}")
+
+        # 디자인 컨셉 선택 UI
+        if st.session_state.design_concepts:
+            st.markdown("##### 🎨 디자인 컨셉 선택")
+            
+            concept_options = [f"{c['name']}: {c['description']}" for c in st.session_state.design_concepts]
+            selected_option = st.radio(
+                "AI가 제안하는 디자인 컨셉 중 하나를 선택하세요:",
+                concept_options,
+                index=0
+            )
+            
+            # 선택된 컨셉 저장
+            selected_index = concept_options.index(selected_option)
+            st.session_state.selected_design_concept = st.session_state.design_concepts[selected_index]
+            
+            st.success(f"✅ 선택된 컨셉: **{st.session_state.selected_design_concept['name']}**")
 
         # 처음 설정할 때만 페이지 구성
         if st.session_state.design_pages is None:

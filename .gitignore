@@ -55,3 +55,8 @@ temp/
 outputs/
 nul
 **/sorted_output/
+
+# 유틸리티 스크립트 (하드코딩된 API 키 포함)
+upload_assets.py
+verify_logic.py
+check_buckets.py
